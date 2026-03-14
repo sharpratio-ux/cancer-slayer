@@ -251,22 +251,17 @@
 <script>
 // [추가] 튜토리얼 시스템 함수 (2단계)
 function checkTutorial() {
-    const tutorialDone = localStorage.getItem('cancer_slayer_tutorial_done');
-    if (!tutorialDone) {
-        document.getElementById('tutorialOverlay').style.display = 'flex';
-        isPlaying = false; // 튜토리얼 레이어 활성화 시 게임 일시정지
-    } else {
-        isPlaying = true; // 이미 본 적 있다면 바로 게임 시작
-    }
+    // 기억장치(localStorage) 확인 로직 삭제. 무조건 띄웁니다!
+    document.getElementById('tutorialOverlay').style.display = 'flex';
+    isPlaying = false; // 게임 일시정지
 }
 
 function closeTutorial() {
     if(typeof playSfx === 'function') playSfx('click');
     document.getElementById('tutorialOverlay').style.display = 'none';
-    localStorage.setItem('cancer_slayer_tutorial_done', 'true');
-    isPlaying = true; // 지시서 닫으면 게임 엔진 가동
+    // 기억장치 저장 로직 삭제.
+    isPlaying = true; // 지시서 닫으면 바로 게임 시작
 }
-
 // 기존 변수 선언부 시작
 let sfx, shootPool, hitPool, damagePool, sIdx = 0, hIdx = 0, dIdx = 0;
 let isInitialized = false;
