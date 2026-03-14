@@ -221,34 +221,38 @@
                 </div>
             </div>
         </div>
-<div id="tutorialOverlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 5500; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; pointer-events: auto;" onclick="closeTutorial()">
+<div id="tutorialOverlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 5500; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; pointer-events: auto;" onclick="closeTutorial()">
     
-    <h2 style="color: #00ffcc; text-shadow: 0 0 10px #00ffcc; margin-bottom: 20px;">[ 정밀 작전 지침 ]</h2>
+    <h2 style="color: #00ffcc; text-shadow: 0 0 10px #00ffcc; margin-bottom: 20px;">[ 나노 전장 기본 수칙 ]</h2>
 
-    <div style="width: 85%; display: flex; flex-direction: column; gap: 15px; text-align: left; font-size: 13px; line-height: 1.5;">
+    <div style="width: 88%; display: flex; flex-direction: column; gap: 12px; text-align: left; font-size: 13px; line-height: 1.4;">
         
-        <div style="background: rgba(0, 255, 204, 0.1); padding: 10px; border-left: 3px solid #00ffcc;">
-            <b style="color: #00ffcc; font-size: 15px;">💡 전략 1: 무분별한 투입 금지</b><br>
-            세포를 보낼수록 <span style="color: #ffff00;">배양 비용(P)이 계속 증가</span>합니다! 포인트 잔량을 확인하며 효율적으로 투입하세요.
+        <div style="background: rgba(0, 255, 204, 0.1); padding: 12px; border-left: 3px solid #00ffcc;">
+            <b style="color: #00ffcc; font-size: 14px;">🔋 세포 배양과 포인트(P)</b><br>
+            • <b>생산:</b> 화면을 터치해 <span style="color: #00ffcc;">세포를 투입</span>하세요 (포인트 소모).<br>
+            • <b>채집:</b> 아군 세포가 암세포를 <span style="color: #ffff00;">타격할 때마다 포인트가 보충</span>됩니다.<br>
+            • <b>경고:</b> 투입량이 늘어날수록 <span style="color: #ffaa00;">세포 생산 단가</span>가 상승합니다!
         </div>
 
-        <div style="background: rgba(255, 68, 68, 0.1); padding: 10px; border-left: 3px solid #ff4444;">
-            <b style="color: #ff4444; font-size: 15px;">🛡️ 전략 2: 방어벽 형성</b><br>
-            암세포의 탄환이 본체에 닿으면 <span style="color: #ff4444;">SYSTEM HP</span>가 깎입니다. 탄환 경로에 세포를 투입해 <span style="color: #fff;">대신 맞게 하세요!</span>
+        <div style="background: rgba(255, 68, 68, 0.1); padding: 12px; border-left: 3px solid #ff4444;">
+            <b style="color: #ff4444; font-size: 14px;">🛡️ 본체 보호 (SYSTEM HP)</b><br>
+            • 암세포의 탄환을 방치하면 사령부(본체)가 침식됩니다.<br>
+            • 탄환이 오는 길목에 세포를 배치해 <span style="color: #fff;">대신 맞게 하세요.</span>
         </div>
 
-        <div style="background: rgba(255, 255, 0, 0.1); padding: 10px; border-left: 3px solid #ffff00;">
-            <b style="color: #ffff00; font-size: 15px;">🚀 전략 3: 전멸기 활용</b><br>
-            포인트가 충분할 땐 ADC 미사일을 발사하세요. 화면 내 <span style="color: #ffff00;">모든 위협 요소를 제거</span>하고 보스에게 큰 타격을 줍니다.
+        <div style="background: rgba(255, 255, 0, 0.1); padding: 12px; border-left: 3px solid #ffff00;">
+            <b style="color: #ffff00; font-size: 14px;">🚀 ADC 미사일 & 강화</b><br>
+            • 위기 시 우측 하단 <span style="color: #ffff00;">ADC 버튼</span>으로 전장을 정화하세요.<br>
+            • 보스 제거 후 획득한 포인트로 <span style="color: #00ffcc;">나노 엔진</span>을 업그레이드하세요.
         </div>
 
     </div>
 
-    <div style="margin-top: 40px; color: #00ffcc; font-weight: bold; animation: pulseBlink 1s infinite;">
-        - 박사님, 지휘를 시작하십시오! -
+    <div style="margin-top: 35px; color: #00ffcc; font-weight: bold; animation: pulseBlink 1s infinite;">
+        - 화면을 터치하여 작전을 개시하십시오 -
     </div>
 </div>
-<script>
+        <script>
 // [추가] 튜토리얼 시스템 함수 (2단계)
 function checkTutorial() {
     // 기억장치(localStorage) 확인 로직 삭제. 무조건 띄웁니다!
