@@ -893,41 +893,36 @@ function showGameOver() {
 }
 
 function showReviveAd() {
-    console.log("나나: 보상형 광고 함수 호출됨"); // 콘솔 기록
     playSfx('click');
     
-    // 1. 함수 실행 확인용 알림 (이게 뜨면 클릭 이벤트는 정상입니다)
-    alert("시스템: 부활 요청을 확인했습니다. 광고 엔진을 가동합니다.");
-
-    // 2. 광고 엔진 로드 상태 확인
+    // 광고 엔진 로드 실패 시 예비 동작
     if (typeof adBreak === 'undefined') {
-        alert("위기: 구글 광고 엔진(adBreak)이 아직 로드되지 않았습니다. 인터넷 연결이나 광고 차단기를 확인해주세요.");
+        alert("나나: 현재 스폰서 통신망이 불안정하여 광고를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.");
         return;
     }
 
+    // 실제 구글 광고 호출 로직
     adBreak({
         type: 'reward',
         name: 'revive_operation',
         beforeReward: (showAdFn) => {
-            console.log("나나: 광고 송출 준비 완료");
-            isPlaying = false; 
+            isPlaying = false; // 게임 일시정지
             showAdFn();
         },
         adDismissed: () => {
-            alert("나나: 광고를 끝까지 보지 않아 복구에 실패했습니다.");
+            alert("나나: 광고 시청이 중단되어 시스템 복구에 실패했습니다.");
             document.getElementById('gameOverScreen').style.display = 'flex';
         },
         adViewed: () => {
-            // 보상 지급 로직
             playSfx('boot');
             gold += 100;
             applyRevive();
             document.getElementById('gameOverScreen').style.display = 'none';
-            alert("성공: 시스템이 완벽히 복구되었습니다! 보너스 100P 지급.");
+            // 나나의 칭찬/안내 메시지만 화면 상단에 띄우기 (또는 생략 가능)
+            console.log("시스템 복구 완료 및 100P 지급");
         }
     });
 }
-
 function applyRevive() {
     userHp = maxUserHp; // HP 100% 부활
     upg.atk *= 1.2;     // 화력 1.2배 버프
