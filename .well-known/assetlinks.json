@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.sharpratio_ux.twa",
+        "sha256_cert_fingerprints": ["9E:31:B4:FE:62:BF:42:54:63:03:92:F8:3B:3C:20:2F:45:06:13:26:B4:0A:59:48:B3:63:58:55:E0:50:C7:A5"]
+      }
+    }]
