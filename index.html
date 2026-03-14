@@ -892,29 +892,31 @@ function showGameOver() {
 
 function showReviveAd() {
     playSfx('click');
+    console.log("광고 호출 시도 중..."); // 👈 버튼 클릭 확인용 로그
     
-    // 🎯 박사님의 실제 보상형 광고 단위 ID 호출
+    // 광고 엔진이 로드되지 않았을 경우를 대비한 안전 장치
+    if (typeof adBreak === 'undefined') {
+        alert("나나: 아직 광고 엔진이 충전 중입니다. 잠시 후 다시 시도해 주세요!");
+        return;
+    }
+
     adBreak({
         type: 'reward',
         name: 'revive_operation',
         beforeReward: (showAdFn) => {
-            // 광고가 시작되면 게임 진행을 일시정지합니다.
-            isPlaying = false; 
+            isPlaying = false;
             showAdFn();
         },
         adDismissed: () => {
-            // 광고를 중간에 끄면 부활시켜주지 않습니다.
-            alert("나나: 광고를 끝까지 시청해야 시스템 복구가 가능합니다!");
+            alert("나나: 광고 시청이 중단되어 시스템 복구에 실패했습니다.");
             document.getElementById('gameOverScreen').style.display = 'flex';
         },
         adViewed: () => {
-            // ✅ 광고 시청 완료: 박사님이 원하신 보상 일괄 지급
-            playSfx('boot'); // 부활 성공음
-            gold += 100;     // 100포인트 보너스 지급
-            applyRevive();   // HP 100% 회복 및 화력 버프 적용
-            
+            playSfx('boot');
+            gold += 100;
+            applyRevive();
             document.getElementById('gameOverScreen').style.display = 'none';
-            console.log("CAR T 세포 재배양 완료! 보너스 100P가 지급되었습니다.");
+            alert("나나: 시스템 복구 완료! 보너스 100P와 화력 버프를 적용했습니다.");
         }
     });
 }
