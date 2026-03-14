@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>나나와 암세포 죽이기 (Kill the Cancer: Nano Warfare)</title>
 <link rel="manifest" href="manifest.json">
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9834227051685569"
+     crossorigin="anonymous"></script>
+<script>
+    window.adsbygoogle = window.adsbygoogle || [];
+    var adBreak = adConfig = function(o) { adsbygoogle.push(o); }
+</script>    
 <script>
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('sw.js');
@@ -886,33 +892,31 @@ function showGameOver() {
 
 function showReviveAd() {
     playSfx('click');
-    document.getElementById('gameOverScreen').style.display = 'none'; 
-    const adScreen = document.getElementById('adScreen');
-    const progressBar = document.getElementById('adProgressBar');
-    const closeBtn = document.getElementById('adCloseBtn');
     
-    adScreen.style.display = 'flex';
-    progressBar.style.width = '0%';
-    closeBtn.style.display = 'none';
-    closeBtn.textContent = "🎁 기적의 부활! (닫기)"; 
-    
-    let progress = 0;
-    let adInterval = setInterval(() => {
-        progress += 5;
-        progressBar.style.width = progress + '%';
-        if (progress >= 100) {
-            clearInterval(adInterval);
-            closeBtn.style.display = 'block';
-            closeBtn.onclick = () => {
-                playSfx('click');
-                adScreen.style.display = 'none';
-                closeBtn.textContent = "🎁 2배 보상 획득 (닫기)"; 
-               // 👇 부활과 동시에 100포인트를 지원금으로 지급합니다.
-                gold += 100;
-                applyRevive(); 
-            };
+    // 🎯 박사님의 실제 보상형 광고 단위 ID 호출
+    adBreak({
+        type: 'reward',
+        name: 'revive_operation',
+        beforeReward: (showAdFn) => {
+            // 광고가 시작되면 게임 진행을 일시정지합니다.
+            isPlaying = false; 
+            showAdFn();
+        },
+        adDismissed: () => {
+            // 광고를 중간에 끄면 부활시켜주지 않습니다.
+            alert("나나: 광고를 끝까지 시청해야 시스템 복구가 가능합니다!");
+            document.getElementById('gameOverScreen').style.display = 'flex';
+        },
+        adViewed: () => {
+            // ✅ 광고 시청 완료: 박사님이 원하신 보상 일괄 지급
+            playSfx('boot'); // 부활 성공음
+            gold += 100;     // 100포인트 보너스 지급
+            applyRevive();   // HP 100% 회복 및 화력 버프 적용
+            
+            document.getElementById('gameOverScreen').style.display = 'none';
+            console.log("CAR T 세포 재배양 완료! 보너스 100P가 지급되었습니다.");
         }
-    }, 100); 
+    });
 }
 
 function applyRevive() {
