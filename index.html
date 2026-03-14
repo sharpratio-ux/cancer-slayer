@@ -221,10 +221,45 @@
                 </div>
             </div>
         </div>
-
+<div id="tutorialOverlay" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 5500; flex-direction: column; align-items: center; justify-content: center; color: white; text-align: center; pointer-events: auto;" onclick="closeTutorial()">
+            <h2 style="color: #00ffcc; text-shadow: 0 0 10px #00ffcc; margin-bottom: 25px;">[ 작전 지시서 ]</h2>
+            <div style="width: 80%; display: flex; flex-direction: column; gap: 20px; text-align: left; font-size: 14px;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px; animation: pulseBlink 1s infinite;">👆</span>
+                    <span><b style="color: #00ffcc;">세포 투입:</b> 화면을 터치하여<br>해당 위치로 면역 세포를 보냅니다.</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">🚀</span>
+                    <span><b style="color: #ff4444;">ADC 미사일:</b> 우측 하단 버튼 클릭 시<br>50P를 소모해 광역 타격을 가합니다.</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 24px;">🧬</span>
+                    <span><b style="color: #ffff00;">강화와 진화:</b> 보스 처치 후<br>세포의 능력치를 업그레이드하세요.</span>
+                </div>
+            </div>
+            <div style="margin-top: 50px; color: #888; font-size: 12px; animation: pulseBlink 1.5s infinite;">- 화면을 터치하여 작전 개시 -</div>
+        </div>
     </div> 
 <script>
+// [추가] 튜토리얼 시스템 함수 (2단계)
+function checkTutorial() {
+    const tutorialDone = localStorage.getItem('cancer_slayer_tutorial_done');
+    if (!tutorialDone) {
+        document.getElementById('tutorialOverlay').style.display = 'flex';
+        isPlaying = false; // 튜토리얼 레이어 활성화 시 게임 일시정지
+    } else {
+        isPlaying = true; // 이미 본 적 있다면 바로 게임 시작
+    }
+}
 
+function closeTutorial() {
+    if(typeof playSfx === 'function') playSfx('click');
+    document.getElementById('tutorialOverlay').style.display = 'none';
+    localStorage.setItem('cancer_slayer_tutorial_done', 'true');
+    isPlaying = true; // 지시서 닫으면 게임 엔진 가동
+}
+
+// 기존 변수 선언부 시작
 let sfx, shootPool, hitPool, damagePool, sIdx = 0, hIdx = 0, dIdx = 0;
 let isInitialized = false;
 
@@ -434,7 +469,7 @@ function startGameFromBriefing(e) {
 
     // 일반 스테이지일 때만 기존의 부드러운 전환 효과 사용
     briefingScreen.style.opacity = '0';
-    setTimeout(() => {
+  setTimeout(() => {
         briefingScreen.style.display = 'none';
         
         if (stage % 3 === 0) {
@@ -447,7 +482,8 @@ function startGameFromBriefing(e) {
             document.getElementById('upgradeScreen').style.display = 'block';
             document.getElementById('clearTitle').textContent = "치료 성공! 강화 선택 (+50P)";
         } else {
-            isPlaying = true; 
+            // [교체 완료] 무조건 시작하지 않고, 튜토리얼 대상인지 먼저 확인합니다.
+            checkTutorial(); 
         }
     }, 500);
 }const canvas = document.getElementById('gameCanvas');
