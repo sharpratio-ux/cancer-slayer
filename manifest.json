@@ -6,6 +6,8 @@
   "lang": "ko-KR",
   "dir": "ltr",
   "categories": ["games", "medical", "action"],
+  "iarc_rating_id": "e58c335a-7602-4ab1-8e01-2949fa0d6d5a",
+  "prefer_related_applications": false,
   "display": "standalone",
   "display_override": ["window-controls-overlay", "minimal-ui"],
   "orientation": "portrait",
@@ -59,8 +61,8 @@
       "src": "assets/shot4.png",
       "sizes": "1080x1920",
       "type": "image/png",
-      "form_factor": "narrow",
-      "label": "보스전"
+      "form_factor": "wide",
+      "label": "보스전 (Wide)"
     }
   ]
 }
