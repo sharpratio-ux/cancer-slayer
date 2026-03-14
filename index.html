@@ -199,11 +199,10 @@
             <h2 style="color: #ff5555; margin: 0; padding-bottom: 10px;">시스템 침식... 위기 발생!</h2>
             <p style="color: #ccc; margin-bottom: 20px;">본체 생명력이 고갈되었습니다. 지원을 요청하시겠습니까?</p>
             
-<div class="upgrade-card" style="background: linear-gradient(90deg, #aa00ff, #6600ff); border: 2px solid #dd88ff; box-shadow: 0 0 15px #aa00ff; animation: pulseBlink 1.5s infinite; color: white; width: 70%; margin: 0 auto 15px auto;" 
-    onclick="event.stopPropagation(); showReviveAd();">
+<div class="upgrade-card" style="background: linear-gradient(90deg, #aa00ff, #6600ff); border: 2px solid #dd88ff; box-shadow: 0 0 15px #aa00ff; animation: pulseBlink 1.5s infinite; color: white; width: 70%; margin: 0 auto 15px auto; user-select: none; -webkit-user-select: none; touch-action: manipulation;" 
+    onclick="showReviveAd(event);">
     📺 [광고 시청] HP 100% 부활 + 화력 1.2배 버프 (현재 스테이지 재도전)
 </div>
-
 
 <div class="info-panel" style="cursor: pointer; background: rgba(255,0,0,0.2); border-color: #ff4444; color: #ffaaaa; display: inline-block; width: 50%;" onclick="location.reload()">
                 💀 작전 포기 (1라운드부터 다시)
@@ -949,7 +948,13 @@ function showGameOver() {
     document.getElementById('gameOverScreen').style.display = 'flex';
 }
 
-function showReviveAd() {
+function showReviveAd(event) {
+    // 👇 ADC 버튼 때처럼 검색 팝업과 화면 클릭 이벤트를 강제로 막습니다.
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
+
     playSfx('click');
     
     // 광고 엔진 로드 실패 시 예비 동작
