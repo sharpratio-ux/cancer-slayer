@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>나나와 암세포 죽이기 (Kill the Cancer: Nano Warfare)</title>
+<link rel="manifest" href="manifest.json">
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+    <style>
+        body { background: #1a0a0a; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
+#gameContainer { 
+    position: relative; width: 100vw; max-width: 450px; aspect-ratio: 9 / 16; 
+    /* 👇 배경 이미지 설정 및 부드러운 전환 추가 */
+    background: url('assets/back1.jpg') no-repeat center; 
+    background-size: cover; 
+    transition: background 0.8s ease-in-out; 
+    
+    overflow: hidden; border: 2px solid #552222; cursor: crosshair; 
+}
+        canvas { width: 100%; height: 100%; display: block; z-index: 1; }
+        
+        /* 상단 UI (보스 체력 및 스탯) */
+        .ui-top { position: absolute; top: 10px; width: 100%; z-index: 10; pointer-events: none; }
+        .stat-bar { background: rgba(0,0,0,0.85); margin: 5px 15px; padding: 12px; border-radius: 12px; border: 1px solid #442222; }
+        
+        /* 하단 컨트롤 및 유저 HP 바 */
+        .controls { position: absolute; bottom: 20px; width: 100%; z-index: 10; pointer-events: none; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .info-panel { pointer-events: auto !important; } /* 클릭 가능하게 강제 설정 */
+        .user-hp-container { width: 80%; background: #333; height: 8px; border-radius: 4px; border: 1px solid #555; overflow: hidden; }
+        #userHpBar { background: linear-gradient(90deg, #33ffcc, #00aa88); width: 100%; height: 100%; transition: width 0.2s; }
+        .info-panel { padding: 10px 20px; font-size: 14px; background: rgba(68, 170, 68, 0.2); border: 1px solid #44aa44; color: #44aa44; border-radius: 40px; font-weight: bold; display: inline-block; }
+        
+        /* 강화(업그레이드) 화면 */
+        #upgradeScreen { display: none; position: absolute; top: 55%; left: 50%; transform: translate(-50%, -50%); background: rgba(0,0,0,0.95); width: 85%; padding: 20px; border: 2px solid #ffaa00; border-radius: 20px; z-index: 200; }
+        .upgrade-card { background: #333; margin: 10px 0; padding: 15px; border-radius: 15px; cursor: pointer; border: 1px solid #555; font-weight: bold; }
+
+        /* 게임 오버 화면 (나나 이미지 제외) */
+        #gameOverScreen { display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 300; flex-direction: column; align-items: center; justify-content: center; }
+        
+        /* 보스 클리어 이펙트 */
+        #bossClearEffect { display: none; position: absolute; top: 25%; left: 50%; transform: translate(-50%, -50%) scale(0.5); font-size: 36px; font-weight: bold; color: #ffcc00; text-shadow: 0 0 20px #ffaa00, 0 0 40px #ff0000; z-index: 150; pointer-events: none; animation: bossPop 1.5s forwards; }
+        @keyframes bossPop { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); } 20%, 80% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1); } }
+        
+        /* [추가] 타이틀 화면 나나 애니메이션 */
+
+/* [추가] 타이틀 화면 나나 애니메이션 */
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+
+        /* 최종 엔딩 화면 스타일: 박사님의 작전 성공을 기념하는 레이어 */
+        #finalEndingScreen {
+            display: none;
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 5000;
+            background: #000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        #endingImage {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            animation: fadeIn 3s forwards;
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style><script src="script.js"></script>
+
+</head>
+<body>
+
+    <div id="gameContainer">
+<audio id="titleBgm" src="Music/Title.mp3" loop></audio>
+<div id="touchToStart" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 2050; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(3px); cursor: pointer;" onclick="initSystem()">
+    <div style="color: #00ffcc; font-size: 18px; font-weight: bold; letter-spacing: 2px; text-shadow: 0 0 10px #00ffcc; animation: pulseBlink 1.5s infinite;">
+        TOUCH TO INITIALIZE
+    </div>
+</div>
+
+<style>
+    /* 부드럽게 깜빡이는 애니메이션 */
+    @keyframes pulseBlink { 
+        0%, 100% { opacity: 1; transform: scale(1); } 
+        50% { opacity: 0.5; transform: scale(0.95); } 
+    }
+</style>
+<div id="titleScreen" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    background: url('assets/Title.png') no-repeat center; background-size: cover; z-index: 2000; 
+    display: flex; flex-direction: column; align-items: center; justify-content: space-around; /* 간격 자동 분산 */
+    padding: 20px 0; box-sizing: border-box; transition: opacity 0.5s;">
+    
+    <div style="text-align: center; width: 100%; z-index: 1010; animation: logoArrival 1.2s forwards;">
+        <img src="assets/Name.png" alt="Game Logo" style="width: 75%; max-width: 350px; filter: drop-shadow(0 0 15px rgba(255, 51, 153, 0.4));">
+        <div style="color: #00ffcc; font-size: 10px; letter-spacing: 2px; margin-top: 5px; opacity: 0.8; font-weight: bold;">
+    KILL THE CANCER: NANO WARFARE
+</div>
+    </div>
+
+    <div style="position: relative; animation: float 3s ease-in-out infinite;">
+        <img src="assets/nana_welcome.png" style="width: 240px; filter: drop-shadow(0 0 15px rgba(255,102,204,0.4));">
+    </div>
+
+        <div style="cursor: pointer; background: linear-gradient(180deg, #00ffcc, #00aa88); color: #1a0a0a; 
+                font-size: 18px; font-weight: bold; width: 170px; text-align: center; border-radius: 50px; 
+                padding: 10px; box-shadow: 0 0 20px rgba(0,255,204,0.5); pointer-events: auto; margin-bottom: 10px;
+                transition: all 0.2s ease-in-out;" 
+         onclick="handleStartClick(this)">
+        GAME START!
+    </div>
+</div>
+<div id="briefingScreen" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 1500; background: url('assets/Room.webp') no-repeat center; background-size: cover; flex-direction: column; align-items: center; transition: opacity 0.5s;">
+    
+    <img id="briefingPatient" src="assets/P1.png" style="width: 60%; margin-top: 15%; filter: drop-shadow(0 0 20px rgba(0,255,204,0.3));">
+    
+    <div style="position: absolute; bottom: 5%; width: 90%; background: rgba(0,20,20,0.85); border: 2px solid #00ffcc; border-radius: 15px; padding: 15px; box-sizing: border-box; box-shadow: 0 0 15px rgba(0,255,204,0.5); z-index: 1510; min-height: 120px;" onclick="nextBriefingText()">
+        <div id="cancerNameDisplay" style="color: #ff3366; font-weight: bold; font-size: 14px; margin-bottom: 5px;">[ 타겟 정보 로딩중... ]</div>
+        <div id="briefingText" style="color: #fff; font-size: 15px; line-height: 1.4; word-break: keep-all;"></div>
+        <div id="briefingNextIndicator" style="position: absolute; bottom: 10px; right: 15px; color: #00ffcc; font-size: 12px; animation: pulseBlink 1s infinite;">▼ 터치하여 진행</div>
+        
+        <div id="briefingStartBtn" style="display: none; margin-top: 15px; text-align: center; background: linear-gradient(90deg, #00ffcc, #00aa88); color: #000; padding: 10px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 0 10px #00ffcc;" onclick="startGameFromBriefing(event)">작전 개시! (START)</div>
+    </div>
+
+    <img id="nanaBriefing" src="assets/nana_briefing.png" style="position: absolute; bottom: 0; right: -20px; width: 55%; z-index: 1505; pointer-events: none;">
+</div>
+        <div id="bossClearEffect">BOSS CLEAR!!</div>
+        
+<div class="ui-top">
+            <div class="stat-bar">
+                <div id="stageText" style="color: #ffcc00; font-weight: bold; font-size: 20px;">STAGE 1</div>
+                <div style="font-size: 13px; margin: 5px 0;">포인트: <span id="pointDisplay">0</span>P | 활성세포: <span id="botCountDisplay">0</span></div>
+                
+                <div style="display: flex; justify-content: space-around; margin-top: 5px; font-size: 11px; color: #00ffcc; font-weight: bold; border-top: 1px solid #442222; padding-top: 5px;">
+                    <span>⚔️ ATK: x<span id="statAtk">1.0</span></span>
+                    <span>🛡️ HP: <span id="statHp">3</span></span>
+                    <span>🚀 SPD: <span id="statSpd">1.2</span></span>
+                </div>
+
+<div style="font-size: 11px; text-align: center; margin-top: 8px; color: #ff6666; font-weight: bold;">
+    TARGET HP: <span id="cancerHpText">150</span> / <span id="maxCancerHpText">150</span>
+</div>
+<div style="background: #333; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 2px;">
+    <div id="hpBar" style="background: linear-gradient(90deg, #ff3333, #ff6666); width: 100%; height: 100%;"></div>
+</div>
+            </div>
+        </div>
+
+        <canvas id="gameCanvas" onclick="spawnBot(event)"></canvas>
+
+        <div class="controls">
+<div class="user-hp-container" style="position: relative; height: 14px;">
+    <div id="userHpBar" style="background: linear-gradient(90deg, #33ffcc, #00aa88); width: 100%; height: 100%; transition: width 0.2s;"></div>
+    <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; text-align: center; font-size: 11px; line-height: 14px; font-weight: bold; color: white; text-shadow: 1px 1px 2px black; pointer-events: none;">
+        SYSTEM HP: <span id="userHpText">100</span> / <span id="maxUserHpText">100</span>
+    </div>
+</div>
+            <div style="display: flex; gap: 8px;">
+                <div class="info-panel" id="priceTag" style="cursor: pointer; background: rgba(0, 255, 204, 0.2);" onclick="spawnBot(event)">🧬 세포 투입 에너지: 5P</div>
+                <div class="info-panel" id="adcBtn" style="cursor: pointer; background: rgba(255, 0, 0, 0.3); border-color: #ff4444; color: #ffaaaa;" onclick="launchADC()">🚀 ADC 미사일 (50P)</div>
+            </div>
+        </div>
+
+<div id="upgradeScreen">
+            <h3 id="clearTitle" style="color: #ffaa00; margin-top: 0;">치료 성공! 강화 선택</h3>
+            <div class="upgrade-card" onclick="applyUpgrade('atk', 1)">⚡ 고주파 화력 강화 (+25%)</div>
+            <div class="upgrade-card" onclick="applyUpgrade('hp', 1)">🛡️ 티타늄 합금 외장 (HP +1)</div>
+            <div class="upgrade-card" onclick="applyUpgrade('spd', 1)">🚀 부스터 엔진 최적화 (+0.5)</div>
+        </div>
+
+        <div id="adScreen" style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 400; flex-direction: column; align-items: center; justify-content: center;">
+            <div style="color: #00ffcc; font-size: 18px; font-weight: bold; margin-bottom: 20px;">스폰서 광고 시청 중... 📺</div>
+            <div style="width: 70%; height: 15px; background: #333; border-radius: 10px; border: 1px solid #555; overflow: hidden;">
+                <div id="adProgressBar" style="width: 0%; height: 100%; background: linear-gradient(90deg, #aa00ff, #ff00ff);"></div>
+            </div>
+<div id="adCloseBtn" style="display: none; margin-top: 30px; padding: 12px 30px; background: #ffcc00; color: #000; font-weight: bold; border-radius: 20px; cursor: pointer; box-shadow: 0 0 15px #ffcc00;">
+                🎁 2배 보상 획득 (닫기)
+            </div>
+        </div>
+
+ <div id="gameOverScreen">
+            <h2 style="color: #ff5555; margin: 0; padding-bottom: 10px;">시스템 침식... 위기 발생!</h2>
+            <p style="color: #ccc; margin-bottom: 20px;">본체 생명력이 고갈되었습니다. 지원을 요청하시겠습니까?</p>
+            
+<div class="upgrade-card" style="background: linear-gradient(90deg, #aa00ff, #6600ff); border: 2px solid #dd88ff; box-shadow: 0 0 15px #aa00ff; animation: pulseBlink 1.5s infinite; color: white; width: 70%; margin: 0 auto 15px auto;" onclick="showReviveAd()">
+                📺 [광고 시청] HP 100% 부활 + 화력 1.2배 버프 (현재 스테이지 재도전)
+            </div>
+
+
+<div class="info-panel" style="cursor: pointer; background: rgba(255,0,0,0.2); border-color: #ff4444; color: #ffaaaa; display: inline-block; width: 50%;" onclick="location.reload()">
+                💀 작전 포기 (1라운드부터 다시)
+            </div>
+        </div>
+
+        <div id="finalEndingScreen">
+            <img id="endingImage" src="assets/ending.jpg" alt="Ending">
+            <div style="position: absolute; bottom: 10%; width: 100%; text-align: center;">
+                <div style="color: #fff; font-size: 18px; font-weight: bold; text-shadow: 2px 2px 4px #000; margin-bottom: 20px;">
+                    MISSION COMPLETE: ALL PATIENTS CURED
+                </div>
+                <div class="info-panel" style="cursor: pointer; background: rgba(255, 255, 255, 0.9); color: #000; display: inline-block; border: none;" onclick="location.reload()">
+                    새로운 환자 작전 시작 (RESTART)
+                </div>
+            </div>
+        </div>
+
+    </div> 
+<script>
+
+let sfx, shootPool, hitPool, damagePool, sIdx = 0, hIdx = 0, dIdx = 0;
+let isInitialized = false;
+
+// 1. 초기화 함수: 오디오 엔진 준비
+function initSystem() {
+    if (isInitialized) return;
+
+ sfx = {
+        boot: new Audio('Music/boot.mp3'),
+        type: new Audio('Music/type.mp3'),
+        click: new Audio('Music/click.mp3'),
+        boom: new Audio('Music/boom.mp3'),
+        clear: new Audio('Music/clear.mp3'),
+        fail: new Audio('Music/fail.mp3')
+    };
+    
+    // 👇 효과음 전체 볼륨을 기본 100%에서 80% 수준으로 일괄 하향 조정합니다.
+    sfx.boot.volume = 0.8;
+    sfx.click.volume = 0.8;
+    sfx.clear.volume = 0.1;
+    sfx.fail.volume = 0.8;
+    sfx.type.volume = 0.15; // 텍스트 소리 (기존 0.2 -> 0.15)
+    sfx.boom.volume = 0.8;  // 미사일 폭발음 (기존 1.0 -> 0.8)
+
+    // 👇 발사음, 피격음, 데미지음 배열을 생성할 때부터 볼륨을 80% 비율로 낮춰서 장전합니다.
+    shootPool = Array.from({ length: 10 }, () => { let a = new Audio('Music/shoot.mp3'); a.volume = 0.8; return a; });
+    hitPool = Array.from({ length: 5 }, () => { let a = new Audio('Music/hit.mp3'); a.volume = 0.5; return a; });
+    damagePool = Array.from({ length: 10 }, () => { let a = new Audio('Music/damage.mp3'); a.volume = 0.08; return a; }); // 데미지음 (기존 0.1 -> 0.08)
+
+    const bgm = document.getElementById('titleBgm');
+    const touchLayer = document.getElementById('touchToStart');
+    
+    bgm.volume = 0.5;
+    bgm.play().catch(e => console.log("재생 대기"));
+
+    touchLayer.style.transition = "opacity 0.5s ease";
+    touchLayer.style.opacity = "0";
+    
+    setTimeout(() => {
+        touchLayer.style.display = "none";
+    }, 500);
+
+    isInitialized = true;
+    playSfx('boot');
+}
+
+// 2. 사운드 재생 유틸리티
+function playShoot() { if(shootPool) { shootPool[sIdx].currentTime = 0; shootPool[sIdx].play(); sIdx = (sIdx + 1) % 10; } }
+function playHit() { if(hitPool) { hitPool[hIdx].currentTime = 0; hitPool[hIdx].play(); hIdx = (hIdx + 1) % 5; } }
+function playSfx(name) { if(sfx && sfx[name]) { sfx[name].currentTime = 0; sfx[name].play(); } }
+function playDamage() { 
+    if(damagePool) { 
+        damagePool[dIdx].currentTime = 0; 
+        damagePool[dIdx].play(); 
+        dIdx = (dIdx + 1) % 10; 
+    } 
+}
+function handleStartClick(btn) {
+    playSfx('click');
+    const title = document.getElementById('titleScreen');
+    const bgm = document.getElementById('titleBgm');
+    
+    let fadeAudio = setInterval(() => {
+        if (bgm.volume > 0.05) bgm.volume = Math.max(0, bgm.volume - 0.05);
+        else { bgm.pause(); clearInterval(fadeAudio); }
+    }, 50);
+
+    btn.style.transform = "scale(0.9)"; 
+    btn.style.background = "#ffffff"; 
+    btn.style.boxShadow = "0 0 50px #ffffff, 0 0 80px #00ffcc"; 
+    
+    setTimeout(() => {
+        // 👇 1. 존재하지 않는 startScreen 대신 titleScreen을 숨깁니다.
+        title.style.display = 'none'; 
+        
+        const briefingScreen = document.getElementById('briefingScreen');
+        briefingScreen.style.display = 'flex';
+        
+        // 👇 2. 브리핑 음악 정상 호출
+        changeBgm('briefing'); 
+        
+        // 👇 3. 누락되었던 파라미터(3) 복구
+        startBriefing(3); 
+    }, 500);
+}
+
+let currentBriefingLines = [];
+let currentLineIndex = 0;
+let typeInterval;
+let isTyping = false;
+let isSuccessBriefing = false; 
+
+function startSuccessBriefing(stageNum) {
+    playSfx('clear');
+    isSuccessBriefing = true;
+    isPlaying = false; 
+    
+    const briefingScreen = document.getElementById('briefingScreen');
+    briefingScreen.style.display = 'flex';
+    briefingScreen.style.opacity = '0';
+    setTimeout(() => { briefingScreen.style.opacity = '1'; }, 50);
+
+    const data = STAGE_DATA[stageNum]; 
+    const nameDisplay = document.getElementById('cancerNameDisplay');
+    nameDisplay.textContent = `[ 작전 성공: ${data.cancerName} 완치 ]`;
+    nameDisplay.style.color = '#00ffcc'; 
+    
+    document.getElementById('briefingPatient').src = `assets/P${stageNum/3}_H.png`;
+    currentBriefingLines = data.success; 
+    currentLineIndex = 0;
+    
+    const btn = document.getElementById('briefingStartBtn');
+    btn.style.display = 'none';
+
+    // 🎯 엔딩 시퀀스 버튼 텍스트 최적화
+    if (stageNum === 18) {
+        btn.textContent = "작전 최종 종료 (엔딩 확인)";
+        btn.style.background = "linear-gradient(90deg, #00ffcc, #ffffff)";
+        btn.style.color = "#000"; // 가독성을 위해 검정 글자
+    } else {
+        btn.textContent = "상태 확인 완료 (강화 선택)";
+        btn.style.background = "linear-gradient(90deg, #ffcc00, #ffaa00)";
+        btn.style.color = "#000";
+    }
+
+    document.getElementById('briefingNextIndicator').style.display = 'block';
+    showNextLine();
+}
+function startBriefing(stageNum) {
+    isSuccessBriefing = false; 
+    
+    const briefingScreen = document.getElementById('briefingScreen');
+    briefingScreen.style.display = 'flex';
+    briefingScreen.style.opacity = '0';
+    setTimeout(() => { briefingScreen.style.opacity = '1'; }, 50);
+
+    const data = STAGE_DATA[stageNum]; 
+    const nameDisplay = document.getElementById('cancerNameDisplay');
+    nameDisplay.textContent = `[ 타겟: ${data.cancerName} ]`;
+    nameDisplay.style.color = '#ff3366'; 
+    
+    document.getElementById('briefingPatient').src = `assets/P${stageNum/3}.png`;
+    currentBriefingLines = data.briefing;
+    currentLineIndex = 0;
+    
+    const btn = document.getElementById('briefingStartBtn');
+    btn.style.display = 'none';
+    btn.textContent = "작전 개시! (START)"; 
+    btn.style.background = "linear-gradient(90deg, #00ffcc, #00aa88)"; 
+    document.getElementById('briefingNextIndicator').style.display = 'block';
+    showNextLine();
+}
+
+function showNextLine() {
+    if (currentLineIndex >= currentBriefingLines.length) {
+        document.getElementById('briefingText').textContent = "박사님, 준비가 완료되었습니다. 지시를 내려주십시오.";
+        document.getElementById('briefingNextIndicator').style.display = 'none';
+        document.getElementById('briefingStartBtn').style.display = 'block';
+        return;
+    }
+
+    const text = currentBriefingLines[currentLineIndex];
+    const textBox = document.getElementById('briefingText');
+    textBox.textContent = "";
+    isTyping = true;
+    let charIndex = 0;
+    clearInterval(typeInterval);
+
+    typeInterval = setInterval(() => {
+        playSfx('type'); // 타이핑 소리
+        textBox.textContent += text.charAt(charIndex);
+        charIndex++;
+        if (charIndex >= text.length) {
+            clearInterval(typeInterval);
+            isTyping = false;
+        }
+    }, 40); 
+    currentLineIndex++;
+}
+
+function nextBriefingText() {
+    if (isTyping) {
+        clearInterval(typeInterval);
+        document.getElementById('briefingText').textContent = currentBriefingLines[currentLineIndex - 1];
+        isTyping = false;
+    } else {
+        showNextLine();
+    }
+}
+
+let isPlaying = false;
+
+function startGameFromBriefing(e) {
+    e.stopPropagation(); 
+    playSfx('click');
+    const briefingScreen = document.getElementById('briefingScreen');
+
+    // 🎯 [박사님 확인 포인트] 엔딩 시퀀스일 때는 페이드 아웃 없이 즉시 처리
+    if (isSuccessBriefing && stage === 18) {
+        const endingScreen = document.getElementById('finalEndingScreen');
+        // 브리핑 창을 즉시 끄고 엔딩 화면을 즉시 켭니다 (간극 제거)
+        briefingScreen.style.display = 'none';
+        endingScreen.style.display = 'flex';
+        isPlaying = false; 
+        return; 
+    }
+
+    // 일반 스테이지일 때만 기존의 부드러운 전환 효과 사용
+    briefingScreen.style.opacity = '0';
+    setTimeout(() => {
+        briefingScreen.style.display = 'none';
+        
+        if (stage % 3 === 0) {
+            changeBgm('boss');
+        } else {
+            changeBgm('normal');
+        }
+
+        if (isSuccessBriefing) {
+            document.getElementById('upgradeScreen').style.display = 'block';
+            document.getElementById('clearTitle').textContent = "치료 성공! 강화 선택 (+50P)";
+        } else {
+            isPlaying = true; 
+        }
+    }, 500);
+}const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 360; canvas.height = 640;
+
+const SHOW_HITBOX = false; 
+
+const boss1Img = new Image(); boss1Img.src = 'assets/boss_stage1.png'; 
+const boss2Img = new Image(); boss2Img.src = 'assets/boss_stage2.png'; 
+const boss3Img = new Image(); boss3Img.src = 'assets/boss_stage3.png';        
+const boss4Img = new Image(); boss4Img.src = 'assets/boss_stage4.png';        
+const boss5Img = new Image(); boss5Img.src = 'assets/boss_stage5.png';        
+const boss6Img = new Image(); boss6Img.src = 'assets/boss_stage6.png';        
+const cancerImg = new Image();
+
+// 👇 [핵심] 변수 선언 직후에 1단계 이미지인 Cancer1.png를 기본값으로 주입합니다.
+cancerImg.src = 'assets/Cancer1.png';
+
+let gold = 10; 
+let stage = 1;
+let userHp = 100; 
+let maxUserHp = 100;
+let currentBotPrice = 5;
+let cancerHp = 150; 
+let maxCancerHp = 150;
+
+let bots = []; 
+let bullets = []; 
+let particles = [];
+
+const BGM_LIST = {
+    briefing: 'Music/brief.mp3',
+    normal: 'Music/play.mp3',
+    boss: 'Music/boss.mp3',
+    success: 'Music/heal.mp3'
+};
+let currentBgm = null;
+
+// 🎵 개선된 음악 제어 엔진 (위치 상향 조정)
+function changeBgm(type) {
+    if (currentBgm) {
+        currentBgm.pause();
+        currentBgm.currentTime = 0;
+    }
+    currentBgm = new Audio(BGM_LIST[type]);
+    currentBgm.volume = 0.3;
+    currentBgm.onended = () => { currentBgm.play(); };
+    currentBgm.play().catch(e => console.log("재생 대기"));
+}
+
+let isClear = false; 
+let isGameOver = false; 
+let cancerPhase = 0; 
+let burstTimer = 0;
+let bossHitTimer = 0; // 👇 보스 피격 시 번쩍임 시간을 관리할 타이머 추가
+const center = { x: canvas.width / 2, y: canvas.height / 2.5 };
+
+let upg = { atk: 1, hp: 3, spd: 2.0 };
+
+let isShaking = false;
+function screenShake(duration, magnitude) {
+    if (isShaking) return;
+    isShaking = true;
+    const startTime = Date.now();
+    
+    function shake() {
+        const elapsed = Date.now() - startTime;
+        if (elapsed < duration) {
+            const dx = (Math.random() - 0.5) * magnitude;
+            const dy = (Math.random() - 0.5) * magnitude;
+            canvas.style.transform = `translate(${dx}px, ${dy}px)`;
+            requestAnimationFrame(shake);
+        } else {
+            canvas.style.transform = 'translate(0px, 0px)';
+            isShaking = false;
+        }
+    }
+    shake();
+}
+
+function spawnBot(e) {
+    if (isClear || isGameOver || gold < currentBotPrice) return;
+    playShoot(); // 나노봇 발사음
+    
+    const rect = canvas.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+    const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+    const angle = Math.atan2(clickY - center.y, clickX - center.x);
+    const cosA = Math.cos(angle);
+    const sinA = Math.sin(angle);
+    
+    let dist = 9999;
+    const margin = 20;
+
+    if (cosA > 0) dist = Math.min(dist, (canvas.width - margin - center.x) / cosA);
+    else if (cosA < 0) dist = Math.min(dist, (margin - center.x) / cosA);
+    if (sinA > 0) dist = Math.min(dist, (canvas.height - margin - center.y) / sinA);
+    else if (sinA < 0) dist = Math.min(dist, (margin - center.y) / sinA);
+
+    const startX = center.x + cosA * dist;
+    const startY = center.y + sinA * dist;
+
+    const powerMult = 1 + Math.max(0, (dist - 160) / 400); 
+
+    gold -= currentBotPrice;
+    bots.push(new Nanobot(startX, startY, powerMult)); 
+    
+    currentBotPrice += 1;
+    document.getElementById('priceTag').innerText = `🧬 세포 투입 에너지: ${currentBotPrice}P`;
+}
+
+function launchADC() {
+    if (gold < 50 || isClear || isGameOver) {
+        if (gold < 50) alert("배양 에너지가 부족합니다! (50P 필요)");
+        return;
+    }
+    gold -= 50;
+    const startX = Math.random() * canvas.width;
+    const startY = canvas.height + 50;
+    
+    let progress = 0;
+    const duration = 40; 
+
+    function animateMissile() {
+        if (progress < duration) {
+            const t = progress / duration;
+            const curX = startX + (center.x - startX) * t;
+            const curY = startY + (center.y - startY) * t - Math.sin(t * Math.PI) * 100;
+
+            ctx.fillStyle = "#ffff00";
+            ctx.beginPath();
+            ctx.arc(curX, curY, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            for(let i=0; i<5; i++) {
+                particles.push(new Particle(curX, curY, "#ff4444"));
+            }
+
+            progress++;
+            requestAnimationFrame(animateMissile);
+        } else {
+            executeADCImpact();
+        }
+    }
+    animateMissile();
+}
+
+function executeADCImpact() {
+    playSfx('boom'); // 미사일 폭발음
+    screenShake(800, 20); 
+    
+    const originalFill = ctx.fillStyle;
+    ctx.fillStyle = "white";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    setTimeout(() => { ctx.fillStyle = originalFill; }, 50);
+
+    cancerHp -= maxCancerHp * 0.3;
+    
+    for(let i=0; i<20; i++) {
+        createSlimeExplosion(center.x + (Math.random()-0.5)*150, center.y + (Math.random()-0.5)*150);
+    }
+}    
+
+class Particle {
+    constructor(x, y, color) {
+        this.x = x; this.y = y; this.color = color;
+        this.size = Math.random() * 4 + 1;
+        this.vx = (Math.random() - 0.5) * 8; this.vy = (Math.random() - 0.5) * 8;
+        this.life = 1.0;
+    }
+    update() { this.x += this.vx; this.y += this.vy; this.life -= 0.04; }
+    draw() {
+        ctx.globalAlpha = this.life; ctx.fillStyle = this.color;
+        ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+    }
+}
+
+function createSlimeExplosion(x, y) { 
+    const slimeColors = ['#00ffcc', '#ffffff', '#aaaaaa'];
+    for(let i=0; i<6; i++) {
+        let color = slimeColors[Math.floor(Math.random() * slimeColors.length)];
+        particles.push(new Particle(x, y, color));
+    }
+}
+
+class Nanobot {
+    constructor(x, y, powerMult = 1) {
+        this.x = x; this.y = y;
+        this.startX = x; this.startY = y;
+        this.powerMult = powerMult;
+        this.speed = (upg.spd * 1.5) + (Math.random() * 2);
+        this.maxHp = upg.hp * this.powerMult;
+        this.hp = this.maxHp;
+        this.isAttacking = false;
+        
+        this.angleOffset = Math.random() * Math.PI * 2; 
+        this.distanceTraveled = 0;
+    }
+    
+    update() {
+        let areas = [];
+        const waveY = Math.sin(Date.now() * 0.004) * 15;
+        
+        if (stage === 3) { 
+            areas = [{x:-45,y:-35+waveY,r:35},{x:45,y:-35+waveY,r:35},{x:-40,y:40+waveY,r:30},{x:40,y:40+waveY,r:30},{x:0,y:10+waveY,r:20}];
+        } else if (stage === 6) { 
+            areas = [{x:-75,y:-60+waveY,r:25},{x:0,y:-75+waveY,r:25},{x:75,y:-60+waveY,r:25},{x:70,y:10+waveY,r:25},{x:20,y:75+waveY,r:30},{x:-40,y:45+waveY,r:25}];
+        } else if (stage === 9) { 
+            areas = [{x:-30,y:-45+waveY,r:40},{x:-35,y:45+waveY,r:40},{x:15,y:0+waveY,r:25},{x:60,y:25+waveY,r:20},{x:60,y:-20+waveY,r:20}];
+        } else if (stage === 12) { 
+            areas = [{x:-50,y:-25+waveY,r:55},{x:55,y:-10+waveY,r:45},{x:-10,y:45+waveY,r:40},{x:40,y:55+waveY,r:30}];
+        } else if (stage === 15) { 
+            areas = [{x:-15,y:-75+waveY,r:25},{x:-35,y:10+waveY,r:45},{x:35,y:25+waveY,r:50},{x:70,y:-25+waveY,r:30}];
+        } else if (stage === 18) { 
+            areas = [{x:-60,y:-30+waveY,r:50},{x:60,y:-30+waveY,r:50},{x:-55,y:55+waveY,r:35},{x:55,y:55+waveY,r:35},{x:0,y:20+waveY,r:25}];
+        } else {
+            areas = [{ x: 0, y: waveY, r: 40 }];
+        }
+
+        let nearestDist = 9999; let targetArea = areas[0];
+        areas.forEach(area => {
+            let bx = center.x + area.x;
+            let by = center.y + area.y;
+            let d = Math.hypot(this.x - bx, this.y - by);
+            if (d < nearestDist) { nearestDist = d; targetArea = {x: bx, y: by, r: area.r}; }
+        });
+
+        if (nearestDist > targetArea.r) {
+            let angle = Math.atan2(targetArea.y - this.y, targetArea.x - this.x);
+            this.distanceTraveled += this.speed;
+            const amplitude = (10 * this.powerMult) * Math.sin(this.distanceTraveled * 0.05 + this.angleOffset);
+            const perpAngle = angle + Math.PI / 2;
+            
+            this.x += Math.cos(angle) * this.speed + Math.cos(perpAngle) * amplitude * 0.1;
+            this.y += Math.sin(angle) * this.speed + Math.sin(perpAngle) * amplitude * 0.1;
+            this.isAttacking = false;
+        } else {
+            this.isAttacking = true;
+            this.x += (Math.random() - 0.5) * 5; 
+            this.y += (Math.random() - 0.5) * 5; 
+            
+if (!isClear && !isGameOver) { 
+                let damage = 0.15 * upg.atk * this.powerMult; 
+                if (stage === 9 && Math.sin(Date.now() * 0.002) > 0.5) damage *= 0.3; 
+                cancerHp -= damage;
+                gold += (stage % 3 === 0) ? 0.05 : 0.15;
+                
+                // 👇 보스를 공격 중이라면 피격 타이머를 올립니다.
+                if (stage % 3 === 0) bossHitTimer = 5; 
+
+                if (Math.random() < 0.05) playDamage();
+                screenShake(50, 1.5); 
+            }
+
+
+        }
+    }
+
+    draw() {
+        let baseR = 8 * this.powerMult; 
+        let r = baseR * (this.hp / this.maxHp);
+        if (this.powerMult > 1.3) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(this.x, this.y, Math.max(r, 3) + 2, 0, Math.PI * 2); ctx.stroke();
+        }
+        ctx.fillStyle = this.isAttacking ? '#ffaa00' : '#00ffcc';
+        ctx.beginPath(); ctx.arc(this.x, this.y, Math.max(r, 3), 0, Math.PI * 2); ctx.fill();
+    }
+}
+
+function drawNormalCancer(x, y, scale) {
+    let hpRatio = cancerHp / maxCancerHp;
+    let isEnraged = hpRatio <= 0.3;
+    const breathe = 1 + Math.sin(Date.now() * (isEnraged ? 0.015 : 0.004)) * (isEnraged ? 0.08 : 0.04);
+    const size = 140 * scale * breathe;
+    ctx.save();
+    // 👇 1. 탁한 검은 그림자를 지우고, 테두리에서 붉은빛이 뿜어져 나오게 변경!
+   ctx.shadowColor = 'rgba(255, 50, 50, 0.5)'; ctx.shadowBlur = 3; ctx.shadowOffsetY = 0;
+   let filterStr = "brightness(1.1) contrast(1.1) saturate(1.2) ";
+    
+    if (burstTimer > 0) filterStr += "brightness(2) ";
+    if (isEnraged) filterStr += "sepia(1) hue-rotate(-50deg) saturate(3) contrast(1.2)";
+    ctx.filter = filterStr; // 빈 문자열 체크 제거
+    
+    ctx.drawImage(cancerImg, x - size/2, y - size/2, size, size);
+    ctx.restore();
+}
+
+function drawBoss(x, y, scale) {
+    ctx.save();
+// 👇 어떤 스테이지든 보스라면 무조건 위아래로 꿈틀거리게 설정합니다.
+    let ty = y + Math.sin(Date.now() * 0.004) * 15;
+    ctx.translate(x, ty);
+    
+    // 👇 1. 보스 전용 강력한 발광 효과 (보랏빛/붉은빛 섞임)
+    ctx.shadowColor = 'rgba(255, 0, 100, 0.7)'; ctx.shadowBlur = 25; ctx.shadowOffsetY = 0;
+    
+// 👇 2. 피격 시 하얗게 번쩍이는 효과를 최우선으로 적용합니다.
+    let filterStr = "contrast(1.25) saturate(1.3) drop-shadow(0 0 5px rgba(255,255,255,0.2)) "; 
+    
+    if (bossHitTimer > 0) {
+        filterStr += "brightness(2.5) contrast(1.5) "; // 👇 강렬한 번쩍임
+        bossHitTimer--; // 타이머 감소
+    }
+    
+    if (burstTimer > 0) filterStr += "brightness(1.5) ";
+    if ((cancerHp / maxCancerHp) <= 0.3) filterStr += "sepia(0.8) hue-rotate(-30deg) saturate(2)";
+    ctx.filter = filterStr;
+    // ... 아래 drawSize 계산하는 부분부터는 그대로 두시면 됩니다! ...
+
+
+let pulse = 1;
+    if (stage === 9) pulse = 1 + Math.sin(Date.now() * 0.002) * 0.03;
+    
+    let drawSize = 240 * scale; 
+    // 👇 신장암부터 폐암까지 렌더링 크기를 히트박스 반경에 맞춰 대폭 키웁니다.
+    if (stage === 9) drawSize = 230 * scale * pulse; // 신장암 확대 (기존 150)
+    if (stage === 12) drawSize = 230 * scale;        // 간암 확대 (기존 170)
+    if (stage === 15) drawSize = 280 * scale;        // 위암 확대 (기존 280)
+    if (stage === 18) drawSize = 230 * scale;        // 폐암 확대 (기존 170)
+
+    let currentImg = boss1Img;
+
+
+    if (stage === 6) currentImg = boss2Img;
+    if (stage === 9) currentImg = boss3Img;
+    if (stage === 12) currentImg = boss4Img;
+    if (stage === 15) currentImg = boss5Img;
+    if (stage === 18) currentImg = boss6Img;
+
+// 👇 나비 날개 애니메이션을 제거하고, 리뉴얼된 이미지를 통째로 출력합니다.
+    ctx.drawImage(currentImg, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+
+
+    ctx.restore();
+
+    if (SHOW_HITBOX) {
+        ctx.strokeStyle = "cyan"; ctx.lineWidth = 2;
+        let hboxes = [];
+// 👇 나노봇이 실제로 타격하는 위치와 시각적인 가이드라인을 일치시킵니다.
+        if (stage === 3) hboxes = [{x:-45,y:-35,r:35},{x:45,y:-35,r:35},{x:-40,y:40,r:30},{x:40,y:40,r:30},{x:0,y:10,r:20}];
+        else if (stage === 6) hboxes = [{x:-75,y:-60,r:25},{x:0,y:-75,r:25},{x:75,y:-60,r:25},{x:70,y:10,r:25},{x:20,y:75,r:30},{x:-40,y:45,r:25}];
+        else if (stage === 9) hboxes = [{x:-30,y:-45,r:40},{x:-35,y:45,r:40},{x:15,y:0,r:25},{x:60,y:25,r:20},{x:60,y:-20,r:20}];
+        else if (stage === 12) hboxes = [{x:-50,y:-25,r:55},{x:55,y:-10,r:45},{x:-10,y:45,r:40},{x:40,y:55,r:30}];
+        else if (stage === 15) hboxes = [{x:-15,y:-75,r:25},{x:-35,y:10,r:45},{x:35,y:25,r:50},{x:70,y:-25,r:30}];
+        else if (stage === 18) hboxes = [{x:-60,y:-30,r:50},{x:60,y:-30,r:50},{x:-55,y:55,r:35},{x:55,y:55,r:35},{x:0,y:20,r:25}];
+        else hboxes = [{x:0, y:0, r:40}];
+
+        hboxes.forEach(a => { ctx.beginPath(); ctx.arc(x + a.x, ty + a.y, a.r, 0, Math.PI*2); ctx.stroke(); });
+    }
+}
+
+class Bullet {
+    constructor() {
+        this.x = center.x; this.y = center.y;
+        let angle = Math.random() * Math.PI * 2;
+        let speedMult = (1.8 + stage * 0.4) * ((cancerHp / maxCancerHp) <= 0.3 ? 1.5 : 1);
+        this.vx = Math.cos(angle) * speedMult; this.vy = Math.sin(angle) * speedMult;
+    }
+    update() { this.x += this.vx; this.y += this.vy; }
+    draw() { ctx.fillStyle = '#ccff00'; ctx.beginPath(); ctx.arc(this.x, this.y, 4, 0, Math.PI * 2); ctx.fill(); }
+}
+
+function showAd(rewardType) {
+    document.getElementById('upgradeScreen').style.display = 'none'; 
+    const adScreen = document.getElementById('adScreen');
+    const progressBar = document.getElementById('adProgressBar');
+    const closeBtn = document.getElementById('adCloseBtn');
+    
+    adScreen.style.display = 'flex';
+    progressBar.style.width = '0%';
+    closeBtn.style.display = 'none';
+    
+    let progress = 0;
+    let adInterval = setInterval(() => {
+        progress += 5;
+        progressBar.style.width = progress + '%';
+        if (progress >= 100) {
+            clearInterval(adInterval);
+            closeBtn.style.display = 'block'; 
+            closeBtn.onclick = () => {
+                playSfx('click');
+                adScreen.style.display = 'none';
+         // 👇 100포인트를 즉시 지급하고 보상을 2배로 적용합니다.
+                gold += 100;
+                applyUpgrade(rewardType, 2); 
+            };
+        }
+    }, 100); 
+}
+
+function applyUpgrade(type, multiplier = 1) {
+    playSfx('click');
+    document.getElementById('bossClearEffect').style.display = 'none';
+    
+    if(type === 'atk') upg.atk *= (1 + 0.25 * multiplier); 
+    if(type === 'hp') upg.hp += (1 * multiplier);
+    if(type === 'spd') upg.spd += (0.5 * multiplier);
+    
+    if (stage % 3 === 0) {
+        userHp = maxUserHp; 
+    }
+    
+    stage++;
+
+// 👇 스테이지 숫자가 바뀐 직후 배경을 확인하여 교체합니다.
+    updateBg();
+
+    currentBotPrice = 5 + (Math.floor((stage - 1) / 3) * 5); 
+    document.getElementById('priceTag').textContent = `🧬 세포 투입 에너지: ${currentBotPrice}P`;
+    
+    maxCancerHp = (stage % 3 === 0) ? (600 + stage * 50) : (150 + (stage * 100)); 
+    cancerHp = maxCancerHp;
+    
+    bots = []; bullets = []; particles = []; 
+    isClear = false;
+    
+    document.getElementById('upgradeScreen').style.display = 'none';
+    
+    const bossNames = { 3: "갑상선암", 6: "대장암", 9: "신장암", 12: "간암", 15: "위암", 18: "폐암" };
+
+
+
+// 👇 다음 스테이지 상황에 맞춰 브리핑/일반/보스 음악으로 다시 전환해 줍니다.
+    if (stage % 3 === 0) {
+        document.getElementById('stageText').textContent = `BOSS: ${bossNames[stage]}`;
+        changeBgm('boss'); // 🎵 보스전 메탈 사운드로 전환!
+        isPlaying = true; 
+    } else if (stage % 3 === 1 && stage > 1 && stage <= 18) {
+        document.getElementById('stageText').textContent = `STAGE ${stage}`;
+        changeBgm('briefing'); // 🎵 다음 장기 진입 전 브리핑 사운드로 전환!
+        startBriefing(stage + 2); 
+    } else {
+        document.getElementById('stageText').textContent = `STAGE ${stage}`;
+        changeBgm('normal'); // 🎵 일반 전투 메탈 사운드로 전환!
+        isPlaying = true; 
+    }
+}
+
+
+
+function showGameOver() {
+    playSfx('fail');
+    isGameOver = true;
+    document.getElementById('gameOverScreen').style.display = 'flex';
+}
+
+function showReviveAd() {
+    playSfx('click');
+    document.getElementById('gameOverScreen').style.display = 'none'; 
+    const adScreen = document.getElementById('adScreen');
+    const progressBar = document.getElementById('adProgressBar');
+    const closeBtn = document.getElementById('adCloseBtn');
+    
+    adScreen.style.display = 'flex';
+    progressBar.style.width = '0%';
+    closeBtn.style.display = 'none';
+    closeBtn.textContent = "🎁 기적의 부활! (닫기)"; 
+    
+    let progress = 0;
+    let adInterval = setInterval(() => {
+        progress += 5;
+        progressBar.style.width = progress + '%';
+        if (progress >= 100) {
+            clearInterval(adInterval);
+            closeBtn.style.display = 'block';
+            closeBtn.onclick = () => {
+                playSfx('click');
+                adScreen.style.display = 'none';
+                closeBtn.textContent = "🎁 2배 보상 획득 (닫기)"; 
+               // 👇 부활과 동시에 100포인트를 지원금으로 지급합니다.
+                gold += 100;
+                applyRevive(); 
+            };
+        }
+    }, 100); 
+}
+
+function applyRevive() {
+    userHp = maxUserHp; // HP 100% 부활
+    upg.atk *= 1.2;     // 화력 1.2배 버프
+    
+    // 🎯 [박사님 요청 사항] 세포 투입 에너지 비용 리셋 및 UI 갱신
+    currentBotPrice = 5; 
+    document.getElementById('priceTag').innerText = `🧬 세포 투입 에너지: ${currentBotPrice}P`;
+    
+    cancerHp = maxCancerHp; // 암세포 체력 리셋
+    bots = []; bullets = []; particles = []; // 기존 개체 초기화
+    burstTimer = 0; cancerPhase = 0;
+    
+    isGameOver = false; 
+    isPlaying = true;   
+}
+
+function updateBg() {
+    const gc = document.getElementById('gameContainer');
+    let bgNum = Math.ceil(stage / 3); 
+    if (bgNum > 6) bgNum = 6; 
+    
+    // 👇 배경 이미지 교체
+    gc.style.backgroundImage = `url('assets/back${bgNum}.jpg')`;
+    
+    // 👇 암세포 이미지 교체 (박사님이 저장하신 Cancer1~6.png 파일과 매칭)
+    cancerImg.src = `assets/Cancer${bgNum}.png`;
+}
+
+function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); 
+    
+    // 👇 이미지를 뭉개지 않고 픽셀 그대로 날카롭게 그리도록 엔진을 제어합니다.
+    ctx.imageSmoothingEnabled = true; 
+    ctx.imageSmoothingQuality = 'high';
+    
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)'; 
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    if (!isClear && !isGameOver && isPlaying) {
+        let attackingBots = bots.filter(b => b.isAttacking).length;
+        if (burstTimer > 0) burstTimer--;
+        else {
+            cancerPhase += (0.15 + stage * 0.05) + (attackingBots * 0.2);
+            if (cancerPhase > 100) {
+                burstTimer = 15; cancerPhase = 0;
+                bots.forEach(bot => { if (bot.isAttacking) { bot.hp -= 1; bot.x += (bot.x - center.x); bot.y += (bot.y - center.y); createSlimeExplosion(bot.x, bot.y); }});
+            }
+        }
+
+        if (stage % 3 === 0) drawBoss(center.x, center.y, burstTimer > 0 ? 1.3 : 1);
+        else drawNormalCancer(center.x, center.y, burstTimer > 0 ? 1.3 : 1);
+        
+        if (Math.random() < (0.02 + (stage * 0.015)) * ((cancerHp / maxCancerHp) <= 0.3 ? 2 : 1)) bullets.push(new Bullet());
+        
+        if (stage === 18 && (cancerHp / maxCancerHp) <= 0.5 && Math.random() < 0.2) {
+            let sx = center.x + (Math.random() - 0.5) * 250;
+            let sy = center.y + (Math.random() - 0.5) * 250;
+            let p = new Particle(sx, sy, 'rgba(40, 40, 40, 0.7)');
+            p.size = Math.random() * 20 + 10; p.life = 1.5;
+            particles.push(p);
+        }
+
+        bots.forEach(bot => bot.update());
+        
+        bullets.forEach(bullet => {
+            bullet.update();
+            
+            if (bullet.x <= 0 || bullet.x >= canvas.width || bullet.y <= 0 || bullet.y >= canvas.height) {
+                playHit(); // 본체 피격음
+                userHp -= 0.7; 
+                screenShake(200, 6); 
+                bullet.toRemove = true;
+                
+                let effectX = Math.max(0, Math.min(canvas.width, bullet.x));
+                let effectY = Math.max(0, Math.min(canvas.height, bullet.y));
+                createSlimeExplosion(effectX, effectY);
+            }
+
+            bots.forEach(bot => {
+                if (!bullet.toRemove && Math.hypot(bot.x - bullet.x, bot.y - bullet.y) < 15) {
+                    bot.hp--; 
+                    bullet.toRemove = true; 
+                    createSlimeExplosion(bullet.x, bullet.y);
+                }
+            });
+        });
+
+        bots = bots.filter(bot => bot.hp > 0);
+        bullets = bullets.filter(b => !b.toRemove && b.x > -50 && b.x < canvas.width+50 && b.y > -50 && b.y < canvas.height+50);
+
+        bots.forEach(bot => bot.draw());
+        bullets.forEach(bullet => bullet.draw());
+
+        if (userHp <= 0) {
+            userHp = 0;
+            showGameOver();
+        }
+
+        if (cancerHp <= 0 && !isGameOver) {
+            isClear = true;
+            changeBgm('success'); // 🎵 추가
+            if (stage % 3 === 0) {
+                gold += 50; 
+                for(let i=0; i<50; i++) particles.push(new Particle(center.x, center.y, '#ffcc00'));
+                setTimeout(() => { startSuccessBriefing(stage); }, 1500);
+            } else { 
+                document.getElementById('upgradeScreen').style.display = 'block'; 
+                document.getElementById('clearTitle').textContent = "스테이지 클리어! 강화 선택";
+            }
+        }
+    } 
+    particles = particles.filter(p => { p.update(); p.draw(); return p.life > 0; });
+    document.getElementById('pointDisplay').innerText = Math.floor(gold);
+    document.getElementById('botCountDisplay').innerText = bots.length;
+    document.getElementById('statAtk').innerText = upg.atk.toFixed(1); // 소수점 1자리까지
+    document.getElementById('statHp').innerText = upg.hp;
+    document.getElementById('statSpd').innerText = upg.spd.toFixed(1);
+    document.getElementById('cancerHpText').innerText = Math.max(0, Math.floor(cancerHp));
+    document.getElementById('maxCancerHpText').innerText = maxCancerHp;
+    document.getElementById('userHpText').innerText = Math.max(0, Math.floor(userHp));
+    document.getElementById('maxUserHpText').innerText = maxUserHp;
+
+    document.getElementById('hpBar').style.width = Math.max(0, (cancerHp / maxCancerHp * 100)) + "%";
+    document.getElementById('userHpBar').style.width = Math.max(0, (userHp / maxUserHp * 100)) + "%"; 
+    
+    requestAnimationFrame(animate);
+}
+bots.push(new Nanobot(center.x, canvas.height + 50));
+animate();
+</script>
+</body>
+</html>

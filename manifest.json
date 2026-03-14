@@ -1,0 +1,21 @@
+{
+  "short_name": "Cancer Slayer",
+  "name": "나나와 암세포 죽이기 (Cancer Slayer: Nano Warfare)",
+  "description": "NANA와 함께하는 정밀 나노 로봇 암세포 박멸 작전",
+  "icons": [
+    {
+      "src": "assets/icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icon_512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#1a0a0a",
+  "theme_color": "#00ffcc"
+}
