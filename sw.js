@@ -1,4 +1,5 @@
 const CACHE_NAME = 'cancer-slayer-v2'; // 🎯 타이틀 변경에 맞춰 버전 업그레이드
+// 버전 업데이트: 1.0.1 (업데이트할 때마다 이 숫자를 바꿔주세요)
 const urlsToCache = [
   './index.html',
   './script.js',
