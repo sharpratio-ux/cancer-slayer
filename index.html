@@ -267,9 +267,14 @@
         <script>
 // [추가] 튜토리얼 시스템 함수 (2단계)
 function checkTutorial() {
-    // 기억장치(localStorage) 확인 로직 삭제. 무조건 띄웁니다!
-    document.getElementById('tutorialOverlay').style.display = 'flex';
-    isPlaying = false; // 게임 일시정지
+    if (stage === 1) {
+        // 👇 1스테이지(최초 시작)일 때만 작전 지침을 띄웁니다.
+        document.getElementById('tutorialOverlay').style.display = 'flex';
+        isPlaying = false; // 게임 일시정지
+    } else {
+        // 👇 2라운드(4스테이지 등)부터는 지침서 없이 바로 게임을 시작합니다.
+        isPlaying = true;
+    }
 }
 
 function closeTutorial() {
