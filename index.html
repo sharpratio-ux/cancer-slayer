@@ -956,6 +956,12 @@ function showReviveAd(event) {
     }
 
     playSfx('click');
+    // 🌟 [여기가 빠졌습니다!] 광고 없이 즉시 부활하는 프리패스 보상 코드 🌟
+    playSfx('boot');
+    gold += 100;
+    applyRevive();
+    document.getElementById('gameOverScreen').style.display = 'none';
+    console.log("나나: 긴급 시스템 복구가 완료되었습니다!");
     
     /* 🚨 여기서부터 아래는 광고 전용 코드입니다. 나중에 정식 출시 때 주석을 푸세요!
     if (typeof adBreak === 'undefined') {
