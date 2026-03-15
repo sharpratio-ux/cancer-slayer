@@ -13,10 +13,22 @@
 </script>-->        
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js');
+    navigator.serviceWorker.register('sw.js').then(reg => {
+      reg.onupdatefound = () => {
+        const installingWorker = reg.installing;
+        installingWorker.onstatechange = () => {
+          if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // 새 업데이트가 감지되면 콘솔에 알리고 1초 뒤 강제 새로고침!
+            console.log("나나: 새로운 작전 데이터가 수신되었습니다. 시스템을 재부팅합니다!");
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 1000);
+          }
+        };
+      };
+    });
   }
-</script>
-    <style>
+</script>    <style>
         body { background: #1a0a0a; color: white; font-family: sans-serif; text-align: center; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
 #gameContainer { 
     position: relative; width: 100vw; max-width: 450px; aspect-ratio: 9 / 16; 
@@ -80,7 +92,8 @@
             animation: fadeIn 3s forwards;
         }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    </style><script src="script.js"></script>
+    </style>
+    <script src="script.js?v=1.0"></script>
 
 </head>
 <body>
