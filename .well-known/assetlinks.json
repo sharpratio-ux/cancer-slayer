@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "io.github.sharpratio_ux.twa",
-        "sha256_cert_fingerprints": ["9E:31:B4:FE:62:BF:42:54:63:03:92:F8:3B:3C:20:2F:45:06:13:26:B4:0A:59:48:B3:63:58:55:E0:50:C7:A5"]
+        "sha256_cert_fingerprints": ["9D:A1:DB:41:BB:17:EE:E0:D6:48:F1:D9:82:6D:38:5B:2B:BC:81:FA:06:ED:8C:93:FE:8B:72:D6:C3:26:DE:14"]
       }
     }]
