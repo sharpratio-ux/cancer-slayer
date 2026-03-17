@@ -11,8 +11,8 @@
   "display": "standalone",
   "display_override": ["window-controls-overlay", "minimal-ui"],
   "orientation": "portrait",
-  "start_url": "/cancer-slayer/index.html",
-  "scope": "/cancer-slayer/",
+  "start_url": "/index.html",
+  "scope": "/",
   "background_color": "#1a0a0a",
   "theme_color": "#00ffcc",
   "icons": [
